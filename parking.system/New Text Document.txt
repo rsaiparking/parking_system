@@ -1,0 +1,15 @@
+Driver - email, plateNumber
+
+{
+	identifiers = [
+			{
+				identifier = 1
+			}, 
+			{
+				identifier = 2
+			}, 
+			{
+				identifier = 3
+			}
+		      ]
+}
