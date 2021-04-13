@@ -16,10 +16,10 @@ public class Parking {
 			}
 		}
 		
-		cells[0][1].setReserved(true);
-		cells[0][2].setReserved(true);
-		cells[0][3].setReserved(true);
-		cells[0][4].setReserved(true);
+		cells[0][1].setIsReserved(true);
+		cells[0][2].setIsReserved(true);
+		cells[0][3].setIsReserved(true);
+		cells[0][4].setIsReserved(true);
 	}
 
 	public Cell[][] getCells() {

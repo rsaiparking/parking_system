@@ -1,8 +1,8 @@
 package com.tu.rsai.parking.system.services;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.springframework.stereotype.Service;
 
@@ -14,12 +14,8 @@ public class ParkingService {
 
 	private static Map<Integer, Parking> parkings;
 
-	public ParkingService() {
-		parkings = initializeParkings();
-	}
-
-	private static Map<Integer, Parking> initializeParkings() {
-		Map<Integer, Parking> parkings = new HashMap<Integer, Parking>();
+	public static void initializeParkings() {
+		Map<Integer, Parking> currentParkings = new TreeMap<Integer, Parking>();
 
 		int parkingCounter = 1;
 		int cellCounter = 1;
@@ -32,34 +28,31 @@ public class ParkingService {
 			for (int row = 0; row < 6; row++) {
 				for (int col = 0; col < 6; col++) {
 					if (row == 0) {
-						Cell cell = new Cell();
-						cells[row][col] = cell;
-						cell.setCellNumber(cellCounter);
+						cells[row][col].setCellNumber(cellCounter);
+						cells[row][col].setIsFree(true);
 
 						cellCounter++;
 					} else if (row > 0 && (col == 0 || col == 5)) {
-						Cell cell = new Cell();
-						cells[row][col] = cell;
-						cell.setCellNumber(cellCounter);
+						cells[row][col].setCellNumber(cellCounter);
+						cells[row][col].setIsFree(true);
 
 						cellCounter++;
 					} else if ((row >= 2 && row <= 4) && (col == 2 || col == 3)) {
-						Cell cell = new Cell();
-						cells[row][col] = cell;
-						cell.setCellNumber(cellCounter);
+						cells[row][col].setCellNumber(cellCounter);
+						cells[row][col].setIsFree(true);
 
 						cellCounter++;
 					}
 				}
 			}
 
-			parkings.put(parkingCounter, parking);
+			currentParkings.put(parkingCounter, parking);
 
 			parkingCounter++;
 			cellCounter = 1;
 		}
 
-		return parkings;
+		parkings = currentParkings;
 	}
 
 	public Parking retrieveParkingByIdentifier(int identifier) {
