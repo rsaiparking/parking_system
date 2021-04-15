@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Cell {
 
+	private int parkingId;
 	private int cellNumber;
 	private boolean isFree;
 	private boolean isReserved;
@@ -12,6 +13,14 @@ public class Cell {
 
 	public Driver getDriver() {
 		return driver;
+	}
+
+	public int getParkingId() {
+		return parkingId;
+	}
+
+	public void setParkingId(int parkingId) {
+		this.parkingId = parkingId;
 	}
 
 	public void setDriver(Driver driver) {
