@@ -1,8 +1,12 @@
 package com.tu.rsai.parking.system.services;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,6 +14,9 @@ import org.springframework.stereotype.Service;
 import com.tu.rsai.parking.system.entity.Cell;
 import com.tu.rsai.parking.system.entity.Driver;
 import com.tu.rsai.parking.system.entity.Parking;
+import com.tu.rsai.parking.system.repository.CellRepository;
+import com.tu.rsai.parking.system.util.CellDTO;
+import com.tu.rsai.parking.system.util.ParkingDTO;
 import com.tu.rsai.parking.system.util.Payment;
 
 @Service
@@ -20,7 +27,11 @@ public class ParkingService {
 	@Autowired
 	private MailService mailService;
 
-	public static void initializeParkings() {
+	@Autowired
+	private CellRepository repository;
+
+	@PostConstruct
+	public void initializeParkings() {
 		Map<Integer, Parking> currentParkings = new TreeMap<Integer, Parking>();
 
 		int parkingCounter = 1;
@@ -54,6 +65,23 @@ public class ParkingService {
 		}
 
 		parkings = currentParkings;
+
+		loadLastStateOfParkings();
+	}
+
+	private void loadLastStateOfParkings() {
+		List<Cell> takenCells = repository.findAll();
+		
+		for (Cell cell : takenCells) {
+			int cellNumber = cell.getCellNumber();
+			int parkingId = cell.getParkingId();
+
+			Parking parking = parkings.get(parkingId);
+			Cell currentCell = parking.getCellByCellNumber(cellNumber);
+			if (currentCell != null) {
+				parking.setCellByCellNumber(cellNumber, cell);
+			}
+		}
 	}
 
 	public static void constructCell(Cell cell, int parkingCounter, int cellCounter) {
@@ -62,14 +90,29 @@ public class ParkingService {
 		cell.setParkingId(parkingCounter);
 	}
 
-	public Parking retrieveParkingByIdentifier(int identifier) {
-		return parkings.get(identifier);
+	public ParkingDTO retrieveParkingById(int identifier) {
+		ParkingDTO parkingDTO = new ParkingDTO();
+		Parking parking = parkings.get(identifier);
+
+		Cell[][] cells = parking.getCells();
+		for (int row = 0; row < 6; row++) {
+			for (int col = 0; col < 6; col++) {
+				Cell cell = cells[row][col];
+
+				CellDTO cellDTO = new CellDTO(cell);
+
+				parkingDTO.setCell(row, col, cellDTO);
+			}
+		}
+
+		return parkingDTO;
 	}
 
 	public Set<Integer> retrieveParkingIdentifiers() {
 		return parkings.keySet();
 	}
 
+	@Transactional
 	public boolean isSuccessfullyParked(int parkingId, int cellId, Driver driver) {
 		Parking parking = parkings.get(parkingId);
 		Cell[][] cells = parking.getCells();
@@ -82,6 +125,9 @@ public class ParkingService {
 						cell.setIsFree(false);
 						driver.setParkingTimeInMs(System.currentTimeMillis());
 						cell.setDriver(driver);
+
+						repository.save(cell);
+
 						return true;
 					} else {
 						return false;
@@ -104,8 +150,12 @@ public class ParkingService {
 					if (!cell.isFree() && cell.getDriver().getPlateNumber().equals(plateNumber)) {
 						double price = calculatePrice(cell.getDriver(), cell.isReserved());
 						mailService.sendMail("konstantinivanov09@yahoo.com", price);
-						cell.setDriver(null);
 						cell.setIsFree(true);
+
+						repository.delete(cell);
+
+						cell.setDriver(null);
+
 						return true;
 					} else {
 						return false;

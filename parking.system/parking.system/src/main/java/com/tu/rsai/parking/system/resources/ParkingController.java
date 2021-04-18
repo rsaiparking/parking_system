@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 import com.tu.rsai.parking.system.entity.Driver;
-import com.tu.rsai.parking.system.entity.PlateNumber;
 import com.tu.rsai.parking.system.services.ParkingService;
 import com.tu.rsai.parking.system.util.PlateNumberDTO;
 
@@ -30,14 +29,9 @@ public class ParkingController {
 		return new Gson().toJson(parkingService.retrieveParkingIdentifiers());
 	}
 
-	@GetMapping(value = "/{identifier}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public String retrieveParkingByIdentifier(@PathVariable(name = "identifier") int identifier) {
-		return new Gson().toJson(parkingService.retrieveParkingByIdentifier(identifier));
-	}
-
-	@PostMapping(value = "/asd", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public String get(@RequestBody PlateNumber plateNumber) {
-		return plateNumber.getPlateNumber();
+	@GetMapping(value = "/{parkingId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public String retrieveParkingByIdentifier(@PathVariable(name = "parkingId") int parkingId) {
+		return new Gson().toJson(parkingService.retrieveParkingById(parkingId));
 	}
 	
 	@PostMapping("/{parking_id}/cells/{cell_id}")

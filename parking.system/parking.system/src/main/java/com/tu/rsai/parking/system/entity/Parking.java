@@ -30,4 +30,28 @@ public class Parking {
 		this.cells = cells;
 	}
 
+	public Cell getCellByCellNumber(int cellNumber) {
+		Cell cell = null;
+
+		for (int row = 0; row < 6; row++) {
+			for (int col = 0; col < 6; col++) {
+				if (cells[row][col].getCellNumber() == cellNumber) {
+					cell = cells[row][col];
+				}
+			}
+		}
+
+		return cell;
+	}
+
+	public void setCellByCellNumber(int cellNumber, Cell cell) {
+		for (int row = 0; row < 6; row++) {
+			for (int col = 0; col < 6; col++) {
+				if (cells[row][col].getCellNumber() == cellNumber) {
+					cells[row][col] = cell;
+					return;
+				}
+			}
+		}
+	}
 }

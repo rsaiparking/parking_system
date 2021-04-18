@@ -1,16 +1,35 @@
 package com.tu.rsai.parking.system.entity;
 
+import javax.persistence.*;
+
 import org.springframework.stereotype.Component;
 
 @Component
+@Entity
+@Table(name = "CELL")
 public class Cell {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
 
 	private int parkingId;
 	private int cellNumber;
 	private boolean isFree;
 	private boolean isReserved;
+
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "driver_id")
 	private Driver driver;
 
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+	
 	public Driver getDriver() {
 		return driver;
 	}
