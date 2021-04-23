@@ -1,4 +1,6 @@
-package com.tu.rsai.parking.system.resources;
+package com.tu.rsai.parking.system.controllers;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
-import com.tu.rsai.parking.system.entity.Driver;
 import com.tu.rsai.parking.system.services.ParkingService;
+import com.tu.rsai.parking.system.util.DriverDTO;
 import com.tu.rsai.parking.system.util.PlateNumberDTO;
 
 @RestController
 @RequestMapping("/parkings")
-public class ParkingController {
+public class ParkingController extends GlobalExceptionController {
 
 	@Autowired
 	private ParkingService parkingService;
@@ -35,22 +37,18 @@ public class ParkingController {
 	}
 	
 	@PostMapping("/{parking_id}/cells/{cell_id}")
-	public ResponseEntity<String> park(@PathVariable(name = "parking_id") int parkingId, @PathVariable (name = "cell_id") int cellId, @RequestBody Driver driver) {
-	   if(parkingService.isSuccessfullyParked(parkingId,cellId,driver)){
-	      return ResponseEntity.status(HttpStatus.OK).body("Driver parked on cell [" + cellId + "] successfully");
-	   }
+	public ResponseEntity<String> park(@PathVariable(name = "parking_id") int parkingId, @PathVariable (name = "cell_id") int cellId, @Valid @RequestBody DriverDTO driverDTO) {
+	   parkingService.parkDriver(parkingId, cellId, driverDTO);
 
-	   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong cell number or cell is not free");
+	   return ResponseEntity.status(HttpStatus.OK).body("Driver parked on cell [" + cellId + "] successfully.");
 	}
 
 	@DeleteMapping("/{parking_id}/cells/{cell_id}")
-	public ResponseEntity<String> unpark(@PathVariable(name = "parking_id") int parkingId, @PathVariable (name = "cell_id") int cellId,@RequestBody PlateNumberDTO plateNumber) {
-	   String number = plateNumber.getPlateNumber();
-	   if(parkingService.isSuccessfullyUnparked(parkingId,cellId,number)){
-	      return ResponseEntity.status(HttpStatus.OK).body("Cell [" + cellId + "] freed successfully");
-	   }
+	public ResponseEntity<String> unpark(@PathVariable(name = "parking_id") int parkingId, @PathVariable (name = "cell_id") int cellId, @Valid @RequestBody PlateNumberDTO plateNumberDTO) {
+	   String plateNumber = plateNumberDTO.getPlateNumber();
+	   parkingService.unparkDriver(parkingId, cellId, plateNumber);
 
-	   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot free the cell successfully");
+	   return ResponseEntity.status(HttpStatus.OK).body("Driver with plate number [" + plateNumber + "] unparked successfully from cell [" + cellId + "].");
 	}
 
 }

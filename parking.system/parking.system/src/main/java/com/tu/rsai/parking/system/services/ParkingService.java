@@ -14,8 +14,11 @@ import org.springframework.stereotype.Service;
 import com.tu.rsai.parking.system.entity.Cell;
 import com.tu.rsai.parking.system.entity.Driver;
 import com.tu.rsai.parking.system.entity.Parking;
+import com.tu.rsai.parking.system.exceptions.BadRequestException;
 import com.tu.rsai.parking.system.repository.CellRepository;
+import com.tu.rsai.parking.system.repository.DriverRepository;
 import com.tu.rsai.parking.system.util.CellDTO;
+import com.tu.rsai.parking.system.util.DriverDTO;
 import com.tu.rsai.parking.system.util.ParkingDTO;
 import com.tu.rsai.parking.system.util.Payment;
 
@@ -28,7 +31,10 @@ public class ParkingService {
 	private MailService mailService;
 
 	@Autowired
-	private CellRepository repository;
+	private CellRepository cellRepository;
+
+	@Autowired
+	private DriverRepository driverRepository;
 
 	@PostConstruct
 	public void initializeParkings() {
@@ -70,7 +76,7 @@ public class ParkingService {
 	}
 
 	private void loadLastStateOfParkings() {
-		List<Cell> takenCells = repository.findAll();
+		List<Cell> takenCells = cellRepository.findAll();
 		
 		for (Cell cell : takenCells) {
 			int cellNumber = cell.getCellNumber();
@@ -94,6 +100,10 @@ public class ParkingService {
 		ParkingDTO parkingDTO = new ParkingDTO();
 		Parking parking = parkings.get(identifier);
 
+		if (parking == null) {
+			throw new BadRequestException("Wrong parking identifier.");
+		}
+
 		Cell[][] cells = parking.getCells();
 		for (int row = 0; row < 6; row++) {
 			for (int col = 0; col < 6; col++) {
@@ -113,8 +123,20 @@ public class ParkingService {
 	}
 
 	@Transactional
-	public boolean isSuccessfullyParked(int parkingId, int cellId, Driver driver) {
+	public void parkDriver(int parkingId, int cellId, DriverDTO driverDTO) {
+		Driver driver = createDriverFrom(driverDTO);
+
+		Driver parkedDriver = driverRepository.findByPlateNumber(driver.getPlateNumber());
+		if (parkedDriver != null) {
+			throw new BadRequestException("Cannot park driver with the same plate number more than once.");
+		}
+
 		Parking parking = parkings.get(parkingId);
+
+		if (parking == null) {
+			throw new BadRequestException("Wrong parking identifier.");
+		}
+
 		Cell[][] cells = parking.getCells();
 
 		for (int row = 0; row < 6; row++) {
@@ -126,45 +148,61 @@ public class ParkingService {
 						driver.setParkingTimeInMs(System.currentTimeMillis());
 						cell.setDriver(driver);
 
-						repository.save(cell);
+						cellRepository.save(cell);
 
-						return true;
+						return;
 					} else {
-						return false;
+						throw new BadRequestException("Cell in not free.");
 					}
 				}
 			}
 		}
 
-		return false;
+		throw new BadRequestException("Wrong cell identifier.");
 	}
 
-	public boolean isSuccessfullyUnparked(int parkingId, int cellId, String plateNumber) {
+	private Driver createDriverFrom(DriverDTO driverDTO) {
+		Driver driver = new Driver();
+		driver.setPlateNumber(driverDTO.getPlateNumber());
+		driver.setEmail(driverDTO.getEmail());
+
+		return driver;
+	}
+
+	public void unparkDriver(int parkingId, int cellId, String plateNumber) {
 		Parking parking = parkings.get(parkingId);
+
+		if (parking == null) {
+			throw new BadRequestException("Wrong parking identifier.");
+		}
+
 		Cell[][] cells = parking.getCells();
 
 		for (int row = 0; row < 6; row++) {
 			for (int col = 0; col < 6; col++) {
 				Cell cell = cells[row][col];
 				if (cell.getCellNumber() == cellId) {
-					if (!cell.isFree() && cell.getDriver().getPlateNumber().equals(plateNumber)) {
-						double price = calculatePrice(cell.getDriver(), cell.isReserved());
-						mailService.sendMail("konstantinivanov09@yahoo.com", price);
-						cell.setIsFree(true);
+					if (!cell.isFree()) {
+						if (cell.getDriver().getPlateNumber().equals(plateNumber)) {
+							double price = calculatePrice(cell.getDriver(), cell.isReserved());
+							mailService.sendMail("konstantinivanov09@yahoo.com", price);
 
-						repository.delete(cell);
+							cell.setIsFree(true);
 
-						cell.setDriver(null);
+							cellRepository.delete(cell);
 
-						return true;
-					} else {
-						return false;
+							cell.setDriver(null);
+
+							return;
+						} else {
+							throw new BadRequestException("Cannot unpark driver. Wrong plate number.");
+						}
 					}
 				}
 			}
 		}
 
-		return false;
+		throw new BadRequestException("Wrong cell identifier.");
 	}
 
 	private double calculatePrice(Driver driver, boolean isReserved) {
