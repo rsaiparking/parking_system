@@ -169,7 +169,7 @@ public class ParkingService {
 		return driver;
 	}
 
-	public void unparkDriver(int parkingId, int cellId, String plateNumber) {
+	public void unparkDriver(int parkingId, String plateNumber) {
 		Parking parking = parkings.get(parkingId);
 
 		if (parking == null) {
@@ -181,28 +181,24 @@ public class ParkingService {
 		for (int row = 0; row < 6; row++) {
 			for (int col = 0; col < 6; col++) {
 				Cell cell = cells[row][col];
-				if (cell.getCellNumber() == cellId) {
-					if (!cell.isFree()) {
-						if (cell.getDriver().getPlateNumber().equals(plateNumber)) {
-							double price = calculatePrice(cell.getDriver(), cell.isReserved());
-							mailService.sendMail("konstantinivanov09@yahoo.com", price);
+				if (!cell.isFree()) {
+					if (cell.getDriver().getPlateNumber().equals(plateNumber)) {
+						double price = calculatePrice(cell.getDriver(), cell.isReserved());
+						mailService.sendMail("konstantinivanov09@yahoo.com", price);
 
-							cell.setIsFree(true);
+						cell.setIsFree(true);
 
-							cellRepository.delete(cell);
+						cellRepository.delete(cell);
 
-							cell.setDriver(null);
+						cell.setDriver(null);
 
-							return;
-						} else {
-							throw new BadRequestException("Cannot unpark driver. Wrong plate number.");
-						}
+						return;
 					}
 				}
 			}
 		}
 
-		throw new BadRequestException("Wrong cell identifier.");
+		throw new BadRequestException("Unpark not successful. No driver found with plate number [" + plateNumber + "].");
 	}
 
 	private double calculatePrice(Driver driver, boolean isReserved) {

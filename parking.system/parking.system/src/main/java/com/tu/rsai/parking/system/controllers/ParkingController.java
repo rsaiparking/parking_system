@@ -43,12 +43,12 @@ public class ParkingController extends GlobalExceptionController {
 	   return ResponseEntity.status(HttpStatus.OK).body("Driver parked on cell [" + cellId + "] successfully.");
 	}
 
-	@DeleteMapping("/{parking_id}/cells/{cell_id}")
-	public ResponseEntity<String> unpark(@PathVariable(name = "parking_id") int parkingId, @PathVariable (name = "cell_id") int cellId, @Valid @RequestBody PlateNumberDTO plateNumberDTO) {
+	@DeleteMapping("/{parking_id}")
+	public ResponseEntity<String> unpark(@PathVariable(name = "parking_id") int parkingId, @Valid @RequestBody PlateNumberDTO plateNumberDTO) {
 	   String plateNumber = plateNumberDTO.getPlateNumber();
-	   parkingService.unparkDriver(parkingId, cellId, plateNumber);
+	   parkingService.unparkDriver(parkingId, plateNumber);
 
-	   return ResponseEntity.status(HttpStatus.OK).body("Driver with plate number [" + plateNumber + "] unparked successfully from cell [" + cellId + "].");
+	   return ResponseEntity.status(HttpStatus.OK).body("Driver with plate number [" + plateNumber + "] unparked successfully.");
 	}
 
 }
