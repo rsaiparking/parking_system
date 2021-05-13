@@ -42,6 +42,7 @@ public class ParkingService {
 
 		int parkingCounter = 1;
 		int cellCounter = 1;
+		int cellIdCounter = 1;
 
 		while (parkingCounter <= 3) {
 			Parking parking = new Parking();
@@ -51,13 +52,13 @@ public class ParkingService {
 				for (int col = 0; col < 6; col++) {
 					Cell cell = cells[row][col];
 					if (row == 0) {
-						constructCell(cell, parkingCounter, cellCounter);
+						constructCell(cell, parkingCounter, cellCounter, cellIdCounter++);
 						cellCounter++;
 					} else if (row > 0 && (col == 0 || col == 5)) {
-						constructCell(cell, parkingCounter, cellCounter);
+						constructCell(cell, parkingCounter, cellCounter, cellIdCounter++);
 						cellCounter++;
 					} else if ((row >= 2 && row <= 4) && (col == 2 || col == 3)) {
-						constructCell(cell, parkingCounter, cellCounter);
+						constructCell(cell, parkingCounter, cellCounter, cellIdCounter++);
 						cellCounter++;
 					}
 				}
@@ -77,7 +78,7 @@ public class ParkingService {
 
 	private void loadLastStateOfParkings() {
 		List<Cell> takenCells = cellRepository.findAll();
-		
+
 		for (Cell cell : takenCells) {
 			int cellNumber = cell.getCellNumber();
 			int parkingId = cell.getParkingId();
@@ -90,10 +91,11 @@ public class ParkingService {
 		}
 	}
 
-	public static void constructCell(Cell cell, int parkingCounter, int cellCounter) {
+	public static void constructCell(Cell cell, int parkingCounter, int cellCounter, int id) {
 		cell.setCellNumber(cellCounter);
 		cell.setIsFree(true);
 		cell.setParkingId(parkingCounter);
+		cell.setId(id);
 	}
 
 	public ParkingDTO retrieveParkingById(int identifier) {
@@ -181,14 +183,14 @@ public class ParkingService {
 		for (int row = 0; row < 6; row++) {
 			for (int col = 0; col < 6; col++) {
 				Cell cell = cells[row][col];
-				if (!cell.isFree()) {
+				if (!cell.isFree() && cell.getId() != 0 && cell.getParkingId() != 0) {
 					if (cell.getDriver().getPlateNumber().equals(plateNumber)) {
 						double price = calculatePrice(cell.getDriver(), cell.isReserved());
-						mailService.sendMail("konstantinivanov09@yahoo.com", price);
+						mailService.sendMail( cell.getDriver().getEmail(), price);
 
 						cell.setIsFree(true);
 
-						cellRepository.delete(cell);
+						cellRepository.deleteById(cell.getId());
 
 						cell.setDriver(null);
 

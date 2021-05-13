@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 public class Cell {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	private int parkingId;
